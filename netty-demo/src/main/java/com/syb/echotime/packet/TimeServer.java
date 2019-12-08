@@ -1,4 +1,4 @@
-package com.syb.echotime;
+package com.syb.echotime.packet;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -6,6 +6,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.codec.string.StringDecoder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,6 +43,8 @@ public class TimeServer {
                     .childHandler(new ChannelInitializer(){
                         @Override
                         protected void initChannel(Channel channel) throws Exception {
+                            channel.pipeline().addLast(new LineBasedFrameDecoder(1024));
+                            channel.pipeline().addLast(new StringDecoder());
                             channel.pipeline().addLast(new TimeServerHandler());
                         }
                     });
@@ -57,19 +61,16 @@ public class TimeServer {
         }
     }
     class TimeServerHandler extends ChannelHandlerAdapter {
+        int count = 0;
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             //所有的数据操作只能操作缓存区
-            ByteBuf byteBuf = (ByteBuf) msg;
-            byte[] req = new byte[byteBuf.readableBytes()];
-            byteBuf.readBytes(req);
-            String body = new String(req, "UTF-8");
 
-            System.out.println("the time server received data:" + body);
+            System.out.println("the time server received data:" + msg+" count:"+(++count));
 
             String currentTime = SimpleDateFormat.getDateTimeInstance().format(new Date());
 
-            ByteBuf res = Unpooled.copiedBuffer(currentTime.getBytes());
+            ByteBuf res = Unpooled.copiedBuffer((currentTime+System.lineSeparator()).getBytes());
             ctx.channel().write(res);
         }
 

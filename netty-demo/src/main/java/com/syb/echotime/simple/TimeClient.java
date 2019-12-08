@@ -1,4 +1,4 @@
-package com.syb.echotime;
+package com.syb.echotime.simple;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
